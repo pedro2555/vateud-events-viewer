@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="moment-js.html">
 
 <dom-module id="news-data">
 
@@ -17,12 +18,84 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   (function() {
 
     let categoryList = [
-      {name: 'today', title: 'Today', filter: ''},
-      {name: 'doodles', title: 'Doodles', filter: ''},
-      {name: 'chrome', title: 'Chrome', filter: ''},
-      {name: 'search', title: 'Search', filter: ''},
-      {name: 'shopping_payments', title: 'Shopping & Payments', filter: ''},
-      {name: 'nonprofits', title: 'Nonprofits', filter: ''}
+      {
+        name: 'today',
+        title: 'Today',
+        filter: function() {
+          where = {
+            '$and': [
+              { 'starts': {'$gte': moment().startOf('day').format('YYYY-MM-DD\\THH:mm:ss\\Z')} },
+              { 'ends': {'$lte': moment().endOf('day').format('YYYY-MM-DD\\THH:mm:ss\\Z')} }
+            ]
+          };
+          return JSON.stringify(where);
+        }
+      },
+      {
+        name: 'tomorrow',
+        title: 'Tomorrow',
+        filter: function() {
+          where = {
+            '$and': [
+              { 'starts': {'$gte': moment().startOf('day').add(1, 'days').format('YYYY-MM-DD\\THH:mm:ss\\Z')} },
+              { 'ends': {'$lte': moment().endOf('day').add(1, 'days').format('YYYY-MM-DD\\THH:mm:ss\\Z')} }
+            ]
+          };
+          return JSON.stringify(where);
+        }
+      },
+      {
+        name: 'this-week',
+        title: 'This Week',
+        filter: function() {
+          where = {
+            '$and': [
+              { 'starts': {'$gte': moment().startOf('week').format('YYYY-MM-DD\\THH:mm:ss\\Z')} },
+              { 'starts': {'$lte': moment().endOf('week').format('YYYY-MM-DD\\THH:mm:ss\\Z')} }
+            ]
+          };
+          return JSON.stringify(where);
+        }
+      },
+      {
+        name: 'this-month',
+        title: 'This Month',
+        filter: function() {
+          where = {
+            '$and': [
+              { 'starts': {'$gte': moment().startOf('month').format('YYYY-MM-DD\\THH:mm:ss\\Z')} },
+              { 'starts': {'$lte': moment().endOf('month').format('YYYY-MM-DD\\THH:mm:ss\\Z')} }
+            ]
+          };
+          return JSON.stringify(where);
+        }
+      },
+      {
+        name: 'next-week',
+        title: 'Next Week',
+        filter: function() {
+          where = {
+            '$and': [
+              { 'starts': {'$gte': moment().startOf('week').add(1, 'weeks').format('YYYY-MM-DD\\THH:mm:ss\\Z')} },
+              { 'starts': {'$lte': moment().endOf('week').add(1, 'weeks').format('YYYY-MM-DD\\THH:mm:ss\\Z')} }
+            ]
+          };
+          return JSON.stringify(where);
+        }
+      },
+      {
+        name: 'next-month',
+        title: 'Next Month',
+        filter: function() {
+          where = {
+            '$and': [
+              { 'starts': {'$gte': moment().startOf('month').add(1, 'months').format('YYYY-MM-DD\\THH:mm:ss\\Z')} },
+              { 'starts': {'$lte': moment().endOf('month').add(1, 'months').format('YYYY-MM-DD\\THH:mm:ss\\Z')} }
+            ]
+          };
+          return JSON.stringify(where);
+        }
+      }
     ];
 
     let textarea = document.createElement('textarea');
@@ -118,7 +191,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this._setFailure(false);
           return;
         }
-        this._fetch('https://vateud-events-api.herokuapp.com/events',
+        this._fetch(['https://vateud-events-api.herokuapp.com/events', '?where=', category.filter(), '&sort=-starts'].join(''),
           (response) => { this.set('category.items', this._parseCategoryItems(response)); },
           attempts || 1 /* attempts */);
       }
@@ -132,7 +205,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             subtitle: item.subtitle,
             description: item.description,
             banner_url: item.banner_url,
-            href: this._getItemHref(item)
+            href: this._getItemHref(item),
+            startsOrEndsIn: this._startsOrEndsIn(moment(item.starts), moment(item.ends))
           });
         }
 
@@ -152,9 +226,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return item.imgSrc ? 'data/' + item.imgSrc : '';
       }
 
+      _startsOrEndsIn(starts, ends) {
+        if (!starts || !ends)
+          return '';
+
+        let now = moment();
+        if (starts.isAfter(now)) {
+          // hasn't started yet
+          if (starts.isSame(now, 'day')) {
+            if (starts.isSame(now, 'hour')) {
+              return 'Starts in less than an hour';
+            }
+            return 'Starts in ' + now.to(starts, true)
+          }
+          if (starts.isSame(now, 'week')) {
+            return 'Starts in ' + now.to(starts, true)
+          }
+          return 'Starts ' + now.calendar(starts);
+        }
+      }
+
       _timeAgo(timestamp) {
         if (!timestamp)
-          return ''
+          return 'not a timestamp'
 
         let minutes = (Date.now() - timestamp) / 1000 / 60;
         if (minutes < 2)
