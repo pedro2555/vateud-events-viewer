@@ -1,1 +1,1 @@
-web: polymer serve
+web: npm start
