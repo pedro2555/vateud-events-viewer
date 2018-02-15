@@ -17,12 +17,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   (function() {
 
     let categoryList = [
-      {name: 'top_stories', title: 'Top Stories'},
-      {name: 'doodles', title: 'Doodles'},
-      {name: 'chrome', title: 'Chrome'},
-      {name: 'search', title: 'Search'},
-      {name: 'shopping_payments', title: 'Shopping & Payments'},
-      {name: 'nonprofits', title: 'Nonprofits'}
+      {name: 'today', title: 'Today', filter: ''},
+      {name: 'doodles', title: 'Doodles', filter: ''},
+      {name: 'chrome', title: 'Chrome', filter: ''},
+      {name: 'search', title: 'Search', filter: ''},
+      {name: 'shopping_payments', title: 'Shopping & Payments', filter: ''},
+      {name: 'nonprofits', title: 'Nonprofits', filter: ''}
     ];
 
     let textarea = document.createElement('textarea');
@@ -118,7 +118,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this._setFailure(false);
           return;
         }
-        this._fetch('data/' + category.name + '.json',
+        this._fetch('https://vateud-events-api.herokuapp.com/events',
           (response) => { this.set('category.items', this._parseCategoryItems(response)); },
           attempts || 1 /* attempts */);
       }
@@ -126,18 +126,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _parseCategoryItems(response) {
         let items = [];
 
-        for (let i = 0, item; item = response[i]; ++i) {
+        for (let i = 0, item; item = response._items[i]; ++i) {
           items.push({
-            headline: this._unescapeText(item.title),
-            href: this._getItemHref(item),
-            id: item.id,
-            imageUrl: this._getItemImage(item),
-            placeholder: item.placeholder,
-            category: item.category,
-            timeAgo: this._timeAgo(new Date(item.time).getTime()),
-            author: item.author,
-            summary: this._trimRight(item.summary, 100),
-            readTime: Math.max(2, Math.round(item.contentLength / 3000)) + ' min read'
+            title: item.title,
+            subtitle: item.subtitle,
+            description: item.description,
+            banner_url: item.banner_url,
+            href: this._getItemHref(item)
           });
         }
 
@@ -150,7 +145,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _getItemHref(item) {
-        return item.id ? '/article/' + this.categoryName + '/' + encodeURIComponent(item.id) : null;
+        return item._id ? '/events/' + encodeURIComponent(item._id) : null;
       }
 
       _getItemImage(item) {

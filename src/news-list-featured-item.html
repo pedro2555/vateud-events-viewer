@@ -181,17 +181,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <a href$="[[item.href]]">
       <div class="img-container">
-        <news-img alt="[[item.headline]]" src="[[item.imageUrl]]" placeholder-src="[[item.placeholder]]"></news-img>
+        <news-img alt="[[item.subtitle]]" src="[[item.banner_url]]" placeholder-src="[[item.placeholder]]"></news-img>
         <div class="scrim"></div>
       </div>
       <div class="headline">
         <div class="category" hidden$="[[!item.category]]">[[item.category]]</div>
-        <h2>[[item.headline]]</h2>
+        <h2>[[item.title]]</h2>
         <div class="details">
+          <div>[[item.subtitle]]</div>
           <div class="time-ago">[[item.timeAgo]]</div>
           <div class="author">[[item.author]]</div>
         </div>
-        <p>[[item.summary]]</p>
+        <p>[[item.description]]</p>
       </div>
     </a>
   </template>
